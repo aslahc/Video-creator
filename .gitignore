@@ -1,6 +1,6 @@
 node_modules/
 downloads/
-.env
+# .env
 .DS_Store
 package-lock.json
 *.mp4
