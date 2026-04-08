@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
+const os = require('os');
 const cron = require('node-cron');
 const ytSearch = require('yt-search');
 const { exec } = require('child_process');
@@ -8,11 +9,11 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { uploadToInstagram } = require('./instagram');
 require('dotenv').config();
 
-const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
+const TEMP_DIR = os.tmpdir();
 const DB_FILE = path.join(__dirname, 'downloaded.json');
 
 // Initialize directories and databases
-fs.ensureDirSync(DOWNLOADS_DIR);
+fs.ensureDirSync(TEMP_DIR);
 if (!fs.existsSync(DB_FILE)) {
     fs.writeJsonSync(DB_FILE, []);
 }
@@ -187,8 +188,8 @@ async function runScraper() {
         const seoData = await generateSEOData(targetVideo.title, keywordUsed);
         
         const outputFilename = `${targetVideo.videoId}.mp4`;
-        const finalOutputPath = path.join(DOWNLOADS_DIR, outputFilename);
-        const rawVideoPath = path.join(DOWNLOADS_DIR, `raw_${targetVideo.videoId}.mp4`);
+        const finalOutputPath = path.join(TEMP_DIR, outputFilename);
+        const rawVideoPath = path.join(TEMP_DIR, `raw_${targetVideo.videoId}.mp4`);
         
         console.log(`Downloading raw video...`);
         await downloadVideo(targetVideo.url, rawVideoPath);
@@ -211,7 +212,7 @@ async function runScraper() {
 
         markAsDownloaded(metadata);
         
-        const detailsPath = path.join(DOWNLOADS_DIR, `${targetVideo.videoId}_details.txt`);
+        const detailsPath = path.join(TEMP_DIR, `${targetVideo.videoId}_details.txt`);
         fs.writeFileSync(detailsPath, `Original Title: ${targetVideo.title}\nSEO Title: ${seoData.seoTitle}\nHashtags: ${seoData.hashtags}\nURL: ${targetVideo.url}\n`);
 
         console.log(`Successfully processed: ${targetVideo.videoId}`);
@@ -222,6 +223,7 @@ async function runScraper() {
         
         try {
             await uploadToInstagram(finalOutputPath, igCaption);
+            console.log('✅ Instagram upload completed successfully');
         } catch (igError) {
             console.error('❌ Instagram upload failed:', igError.message);
         } finally {
@@ -250,10 +252,20 @@ SCHEDULES.forEach(s => {
 
 if (require.main === module) {
     const args = process.argv.slice(2);
-    if (args.includes('--run-now') || true) {
+    if (args.includes('--run-now')) {
         console.log('Starting execution immediately...');
         runScraper().then(() => {
-            console.log("Initial run complete. Scheduled bot is active and waiting for 10 AM...");
+            console.log('Run completed. Exiting.');
+            process.exit(0);
         });
+    } else {
+        // Schedule cron jobs for automatic runs
+        SCHEDULES.forEach(s => {
+            cron.schedule(s, () => {
+                console.log(`⏰ Scheduled Task Triggered: ${s}`);
+                runScraper();
+            });
+        });
+        console.log('Cron schedules set. Bot will run at configured times.');
     }
 }
