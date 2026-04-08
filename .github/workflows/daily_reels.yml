@@ -1,0 +1,48 @@
+name: Daily Viral Reels Scraper
+
+on:
+  schedule:
+    # GitHub Action Cron: [minute] [hour] [day of month] [month] [day of week]
+    # Runs at 4:30 AM, 7:00 AM, 11:30 AM, 2:00 PM UTC (Equivalent to IST 9:30, 12, 16:30, 19)
+    - cron: '30 4 * * *'
+    - cron: '0 7 * * *'
+    - cron: '0 11 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  scrape-and-post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          sudo add-apt-repository ppa:tomtomtom/yt-dlp
+          sudo apt update
+          sudo apt install yt-dlp ffmpeg -y
+          npm install
+
+      - name: Run Scraper and Upload to Instagram
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: node index.js --run-now
+
+      - name: Auto-commit updated history (downloaded.json)
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "bot@github.com"
+          git add downloaded.json
+          git commit -m "Auto-update: Sync downloaded history [skip ci]" || echo "No changes to commit"
+          git push
