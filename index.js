@@ -92,7 +92,7 @@ HASHTAGS: <your hashtags separated by spaces>`;
 
 async function downloadVideo(url, outputPath) {
     return new Promise((resolve, reject) => {
-        const command = `yt-dlp -f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best" --ffmpeg-location "${ffmpegStatic}" --merge-output-format mp4 -o "${outputPath}" "${url}"`;
+        const command = `yt-dlp -f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best" --ffmpeg-location "${ffmpegStatic}" --js-runtimes deno --merge-output-format mp4 -o "${outputPath}" "${url}"`;
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 console.error(`yt-dlp download failed: ${stderr || error.message}`);
