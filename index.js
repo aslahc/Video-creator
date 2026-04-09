@@ -94,7 +94,10 @@ HASHTAGS: <your hashtags separated by spaces>`;
 async function downloadVideo(url, outputPath) {
     return new Promise((resolve, reject) => {
         const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
-        const command = `yt-dlp --user-agent "${userAgent}" -f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best" --ffmpeg-location "${ffmpegStatic}" --js-runtimes deno --merge-output-format mp4 -o "${outputPath}" "${url}"`;
+        const cookiesPath = path.join(__dirname, 'cookies.txt');
+        const cookieFlag = fs.existsSync(cookiesPath) ? `--cookies "${cookiesPath}"` : "";
+        
+        const command = `yt-dlp --user-agent "${userAgent}" ${cookieFlag} -f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best" --ffmpeg-location "${ffmpegStatic}" --js-runtimes node --merge-output-format mp4 -o "${outputPath}" "${url}"`;
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 console.error(`yt-dlp download failed: ${stderr || error.message}`);
