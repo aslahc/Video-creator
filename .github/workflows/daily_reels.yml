@@ -24,7 +24,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # No cache key specified - avoids lock-file error entirely
+
+      - name: Install Deno (for yt-dlp)
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
 
       - name: Install system dependencies (yt-dlp & ffmpeg)
         run: |
