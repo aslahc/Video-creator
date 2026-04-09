@@ -260,6 +260,7 @@ if (require.main === module) {
         });
     } else {
         // Schedule cron jobs for automatic runs
+        
         SCHEDULES.forEach(s => {
             cron.schedule(s, () => {
                 console.log(`⏰ Scheduled Task Triggered: ${s}`);
