@@ -48,6 +48,9 @@ jobs:
             npm install
           fi
 
+      - name: Save YouTube Cookies
+        run: echo "${{ secrets.YT_COOKIES }}" > cookies.txt
+
       - name: Run scraper & upload to Instagram
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
