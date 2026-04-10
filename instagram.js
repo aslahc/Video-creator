@@ -49,11 +49,11 @@ async function uploadToTmpFiles(filePath) {
 }
 
 async function uploadToInstagram(videoPath, caption) {
-    const igUserId = process.env.IG_USER_ID;
-    const igAccessToken = process.env.IG_ACCESS_TOKEN;
+    const igUserId = "17841452811036097";
+    const igAccessToken = "EAASZAgdbuNX8BRNtvjlgoKS5cvm4SxfYVEP7R9DaFRftkYcZCMInjEkuhz1lv2rAGLCM2VYqqliLjMCBBDhgQoqV0P8hZCZAIxSMF4lO8WnK5mzZAJjd8kMKZC2YOQ9ANvXApa6ZAcb7uUUR2F8sDaZCPvmrZA6uJDGnrZBbMXB6sFOdJnAvCv7A2g6ebzXlFJF0m8awzEs14BdZC5d";
 
     if (!igUserId || !igAccessToken) {
-        console.error('⚠️ IG_USER_ID or IG_ACCESS_TOKEN is missing in .env. Skipping Instagram upload.');
+        console.error('⚠️ IG_USER_ID or IG_ACCESS_TOKEN is missing. Skipping Instagram upload.');
         return;
     }
 

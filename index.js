@@ -33,13 +33,14 @@ const KEYWORDS = [
 ];
 
 // Load AI using Gemini (if key provided), else fail gracefully
+const GEMINI_API_KEY = "AIzaSyC9NPpk8KWD22L2nuvaLAR5dbX-G7_sr4w";
 let aiModel = null;
-if (process.env.GEMINI_API_KEY) {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+if (GEMINI_API_KEY) {
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     // Using gemini-pro which has highest availability across all versions
     aiModel = genAI.getGenerativeModel({ model: 'gemini-pro' }); 
 } else {
-    console.warn("⚠️ No GEMINI_API_KEY found in .env. Using fallback title generation.");
+    console.warn("⚠️ No GEMINI_API_KEY found. Using fallback title generation.");
 }
 
 function getDownloadedVideos() {
