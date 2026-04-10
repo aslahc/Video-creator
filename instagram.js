@@ -7,33 +7,45 @@ async function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Uploads file temporarily to catbox.moe to get a direct public URL
+// Uploads file temporarily to catbox.moe (Primary)
 async function uploadToCatbox(filePath) {
-    console.log(`☁️ Uploading ${filePath} to temporary public store...`);
-    
-    if (!fs.existsSync(filePath)) {
-        throw new Error(`File not found: ${filePath}`);
-    }
-
     const form = new FormData();
     form.append('reqtype', 'fileupload');
     form.append('fileToUpload', fs.createReadStream(filePath));
 
-    try {
-        const response = await axios.post('https://catbox.moe/user/api.php', form, {
-            headers: form.getHeaders(),
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity,
-        });
-        
-        // Catbox returns the plain text URL
-        const fileUrl = response.data.trim();
-        console.log(`✅ Temporary URL generated: ${fileUrl}`);
-        return fileUrl;
-    } catch (error) {
-        console.error('❌ Failed to upload to catbox:', error.message);
-        throw error;
+    const response = await axios.post('https://catbox.moe/user/api.php', form, {
+        headers: form.getHeaders(),
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+    });
+    
+    const fileUrl = response.data.trim();
+    if (!fileUrl || !fileUrl.startsWith('http')) {
+        throw new Error(`Invalid URL returned from Catbox: "${fileUrl}"`);
     }
+    return fileUrl;
+}
+
+// Backup: Uploads to tmpfiles.org if Catbox fails
+async function uploadToTmpFiles(filePath) {
+    console.log(`☁️  Switching to Backup Host (tmpfiles.org)...`);
+    const form = new FormData();
+    form.append('file', fs.createReadStream(filePath));
+
+    const response = await axios.post('https://tmpfiles.org/api/v1/upload', form, {
+        headers: form.getHeaders(),
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+    });
+
+    if (response.data && response.data.status === 'success') {
+        // Convert https://tmpfiles.org/XXXXX to https://tmpfiles.org/dl/XXXXX for direct video access
+        const uploadUrl = response.data.data.url;
+        const directUrl = uploadUrl.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+        console.log(`✅  Backup URL generated: ${directUrl}`);
+        return directUrl;
+    }
+    throw new Error('tmpfiles.org upload failed or returned invalid data');
 }
 
 async function uploadToInstagram(videoPath, caption) {
@@ -46,8 +58,18 @@ async function uploadToInstagram(videoPath, caption) {
     }
 
     try {
-        // Step 1: Upload to catbox to get a public URL
-        const publicVideoUrl = await uploadToCatbox(videoPath);
+        let publicVideoUrl;
+        
+        // Try Primary Host (Catbox)
+        try {
+            console.log(`☁️  Uploading ${path.basename(videoPath)} to primary store (Catbox)...`);
+            publicVideoUrl = await uploadToCatbox(videoPath);
+            console.log(`✅  Primary URL generated: ${publicVideoUrl}`);
+        } catch (primaryError) {
+            console.warn(`⚠️  Primary host (Catbox) failed: ${primaryError.message}`);
+            // Try Backup Host (tmpfiles)
+            publicVideoUrl = await uploadToTmpFiles(videoPath);
+        }
 
         // Step 2: Initialize Reel creation
         console.log('📱 Initializing Instagram Reel upload...');
@@ -112,6 +134,7 @@ async function uploadToInstagram(videoPath, caption) {
         if (error.response?.data) {
             console.error('Meta API Error Details:', error.response.data);
         }
+        throw error; // Re-throw so index.js knows it failed
     }
 }
 

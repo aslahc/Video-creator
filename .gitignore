@@ -4,4 +4,3 @@ downloads/
 .DS_Store
 package-lock.json
 *.mp4
-*.txt
