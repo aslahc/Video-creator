@@ -37,8 +37,8 @@ const GEMINI_API_KEY = "AIzaSyC9NPpk8KWD22L2nuvaLAR5dbX-G7_sr4w";
 let aiModel = null;
 if (GEMINI_API_KEY) {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    // Using gemini-pro which has highest availability across all versions
-    aiModel = genAI.getGenerativeModel({ model: 'gemini-pro' }); 
+    // Using gemini-1.5-flash for faster and more reliable title generation
+    aiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); 
 } else {
     console.warn("⚠️ No GEMINI_API_KEY found. Using fallback title generation.");
 }
@@ -98,7 +98,7 @@ async function downloadVideo(url, outputPath) {
         const cookiesPath = path.join(__dirname, 'cookies.txt');
         const cookieFlag = fs.existsSync(cookiesPath) ? `--cookies "${cookiesPath}"` : "";
         
-        const command = `yt-dlp --user-agent "${userAgent}" ${cookieFlag} -f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best" --ffmpeg-location "${ffmpegStatic}" --js-runtimes node --merge-output-format mp4 -o "${outputPath}" "${url}"`;
+        const command = `yt-dlp --user-agent "${userAgent}" ${cookieFlag} --extractor-args "youtube:player-client=ios,web" -f "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best" --ffmpeg-location "${ffmpegStatic}" --js-runtimes node --merge-output-format mp4 -o "${outputPath}" "${url}"`;
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 console.error(`yt-dlp download failed: ${stderr || error.message}`);
